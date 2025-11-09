@@ -20,36 +20,38 @@
 namespace android {
 
 typedef void (*legacy_callback_t)(int event, void* user, void* info);
+// Complete class structure after all fixes:
 class LegacyCallbackWrapper : public AudioTrack::IAudioTrackCallback {
-    const AudioTrack::legacy_callback_t mCallback;
-    void* const mData;
+public:
+    const legacy_callback_t mCallback; // Used for initialization
+    void* mUser;                       // Used for initialization
 
-  public:
-    LegacyCallbackWrapper(AudioTrack::legacy_callback_t callback, void* user)
-        : mCallback(callback), mData(user) {}
+    LegacyCallbackWrapper(legacy_callback_t callback, void* user)
+        : mCallback(callback), mUser(user) {} // Constructor is now valid
+// ... rest of the class methods ...};
     size_t onMoreData(const AudioTrack::Buffer& buffer) override {
         AudioTrack::Buffer copy = buffer;
-        mCallback(AudioTrack::EVENT_MORE_DATA, mData, static_cast<void*>(&copy));
+        mCallback(AudioTrack::EVENT_MORE_DATA, mUser, static_cast<void*>(&copy));
         return copy.size();
     }
-    void onUnderrun() override { mCallback(AudioTrack::EVENT_UNDERRUN, mData, nullptr); }
+    void onUnderrun() override { mCallback(AudioTrack::EVENT_UNDERRUN, mUser, nullptr); }
     void onLoopEnd(int32_t loopsRemaining) override {
-        mCallback(AudioTrack::EVENT_LOOP_END, mData, &loopsRemaining);
+        mCallback(AudioTrack::EVENT_LOOP_END, mUser, &loopsRemaining);
     }
     void onMarker(uint32_t markerPosition) override {
-        mCallback(AudioTrack::EVENT_MARKER, mData, &markerPosition);
+        mCallback(AudioTrack::EVENT_MARKER, mUser, &markerPosition);
     }
     void onNewPos(uint32_t newPos) override {
-        mCallback(AudioTrack::EVENT_NEW_POS, mData, &newPos);
+        mCallback(AudioTrack::EVENT_NEW_POS, mUser, &newPos);
     }
-    void onBufferEnd() override { mCallback(AudioTrack::EVENT_BUFFER_END, mData, nullptr); }
+    void onBufferEnd() override { mCallback(AudioTrack::EVENT_BUFFER_END, mUser, nullptr); }
     void onNewIAudioTrack() override {
-        mCallback(AudioTrack::EVENT_NEW_IAUDIOTRACK, mData, nullptr);
+        mCallback(AudioTrack::EVENT_NEW_IAUDIOTRACK, mUser, nullptr);
     }
-    void onStreamEnd() override { mCallback(AudioTrack::EVENT_STREAM_END, mData, nullptr); }
+    void onStreamEnd() override { mCallback(AudioTrack::EVENT_STREAM_END, mUser, nullptr); }
     size_t onCanWriteMoreData(const AudioTrack::Buffer& buffer) override {
         AudioTrack::Buffer copy = buffer;
-        mCallback(AudioTrack::EVENT_CAN_WRITE_MORE_DATA, mData, static_cast<void*>(&copy));
+        mCallback(AudioTrack::EVENT_CAN_WRITE_MORE_DATA, mUser, static_cast<void*>(&copy));
         return copy.size();
     }
 };
